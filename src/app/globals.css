@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf6f9;
+  --foreground: #070707;
+  --brand-primary: #070707;
+  --brand-primary-light: #f3f3f3;
+  --brand-primary-soft: #ececec;
+  --brand-muted: #767676;
+  --brand-border: #e5e5e5;
+  color-scheme: light;
+  accent-color: #070707;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-primary: #070707;
+  --color-brand-primary-light: #f3f3f3;
+  --color-brand-primary-soft: #ececec;
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-border: var(--brand-border);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Tailwind 기본 파란·인디고 계열 → #070707 */
+  --color-blue-50: #f3f3f3;
+  --color-blue-100: #ececec;
+  --color-blue-200: #d4d4d4;
+  --color-blue-300: #a3a3a3;
+  --color-blue-400: #525252;
+  --color-blue-500: #070707;
+  --color-blue-600: #070707;
+  --color-blue-700: #070707;
+  --color-blue-800: #070707;
+  --color-blue-900: #070707;
+  --color-blue-950: #070707;
+  --color-indigo-50: #f3f3f3;
+  --color-indigo-100: #ececec;
+  --color-indigo-200: #d4d4d4;
+  --color-indigo-300: #a3a3a3;
+  --color-indigo-400: #525252;
+  --color-indigo-500: #070707;
+  --color-indigo-600: #070707;
+  --color-indigo-700: #070707;
+  --color-indigo-800: #070707;
+  --color-indigo-900: #070707;
+  --color-indigo-950: #070707;
+  --color-violet-50: #f3f3f3;
+  --color-violet-100: #ececec;
+  --color-violet-500: #070707;
+  --color-violet-600: #070707;
+  --color-violet-700: #070707;
+  --color-sky-500: #070707;
+  --color-sky-600: #070707;
+  --color-cyan-500: #070707;
+  --color-cyan-600: #070707;
+  --default-ring-color: #070707;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Pretendard", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+a:not([class]) {
+  color: #070707;
+  text-decoration-color: #070707;
+}
+
+::selection {
+  background: #070707;
+  color: #ffffff;
+}
+
+:focus-visible {
+  outline: 2px solid #070707;
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea,
+button {
+  accent-color: #070707;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  --tw-ring-color: #070707;
+  border-color: #070707;
+  outline-color: #070707;
 }
