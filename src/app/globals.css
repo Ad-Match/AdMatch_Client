@@ -3,11 +3,18 @@
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), sans-serif;
+  --color-white: #FAF6F9;
 }
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-white text-zinc-900 font-sans antialiased;
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
   }
 }
 

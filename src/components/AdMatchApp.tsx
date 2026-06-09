@@ -92,7 +92,7 @@ const BottomNav = ({
   setActiveTab: (tab: string) => void;
   chatUnreadTotal: number;
 }) => (
-  <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-100 px-6 py-3 flex justify-between items-center z-50 md:top-0 md:bottom-auto md:left-0 md:w-20 md:h-screen md:flex-col md:border-t-0 md:border-r md:py-12">
+  <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-100 px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex justify-between items-center z-50 md:top-0 md:bottom-auto md:left-0 md:w-20 md:h-screen md:flex-col md:border-t-0 md:border-r md:py-12 md:pb-12">
     <div className="hidden md:block mb-12">
       <h1 className="text-2xl font-bold tracking-tighter font-display">AM</h1>
     </div>
