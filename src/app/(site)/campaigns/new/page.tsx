@@ -3,34 +3,39 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AuthGate } from "@/components/auth/AuthGate";
+import { TagChipInput } from "@/components/ui/TagChipInput";
+import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthProvider";
 import { apiFetch } from "@/lib/api";
+import { parseApiErrorMessage } from "@/lib/api-errors";
+import { processCampaignCoverImage } from "@/lib/image-process";
 import type { Campaign } from "@/lib/types";
 
 export default function CampaignCreatePage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [tags, setTags] = useState<string[]>([]);
   const [form, setForm] = useState({
     category: "SNS 광고",
     title: "",
     pay: "",
     due: "",
-    requiredTags: "",
+    location: "",
+    description: "",
+    requirements: "",
+    deliverables: "",
   });
-
-  if (user && user.role !== "advertiser") {
-    return (
-      <p className="px-4 py-16 text-center text-red-600">
-        광고주 계정으로만 공고를 등록할 수 있습니다.
-      </p>
-    );
-  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!user) {
-      router.push("/login");
+    if (!user) return;
+    if (tags.length < 1) {
+      setError("필요 태그를 1개 이상 입력해 주세요.");
       return;
     }
 
@@ -39,74 +44,145 @@ export default function CampaignCreatePage() {
       const campaign = await apiFetch<Campaign>("/campaigns", {
         method: "POST",
         body: JSON.stringify({
-          category: form.category,
-          title: form.title,
-          pay: form.pay,
-          due: form.due,
+          ...form,
           advertiserId: user.id,
-          requiredTags: form.requiredTags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean),
+          requiredTags: tags,
+          imageUrl: imageUrl || undefined,
         }),
       });
+      showToast("공고가 등록되었습니다!", "success");
       router.push(`/campaigns/${campaign.id}`);
-    } catch {
-      setError("공고 등록에 실패했습니다. 로그인 상태를 확인해 주세요.");
+    } catch (err) {
+      const msg = parseApiErrorMessage(err);
+      setError(msg);
+      showToast(msg, "error");
     }
   }
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-8">
-      <Link href="/campaigns" className="text-sm text-brand-primary hover:underline">
-        ← 브랜드 공고
-      </Link>
-      <h1 className="mt-4 text-2xl font-bold text-gray-900">공고 올리기</h1>
+    <AuthGate roles={["advertiser"]}>
+      <div className="mx-auto max-w-xl px-4 py-8">
+        <Link href="/campaigns" className="text-sm text-[#070707] hover:underline">
+          ← 브랜드 공고
+        </Link>
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">공고 올리기</h1>
+        <p className="mt-1 text-sm text-brand-muted">
+          상세 내용을 채울수록 AI 추천·매칭 품질이 좋아집니다.
+        </p>
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-2xl bg-white p-6 shadow-sm">
-        <input
-          required
-          placeholder="카테고리 (예: SNS 광고)"
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
-        />
-        <input
-          required
-          placeholder="공고 제목"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
-        />
-        <input
-          required
-          placeholder="페이 (예: 20만원 ~ 50만원)"
-          value={form.pay}
-          onChange={(e) => setForm({ ...form, pay: e.target.value })}
-          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
-        />
-        <input
-          required
-          placeholder="마감 (예: D-7 / 2026-06-10 마감)"
-          value={form.due}
-          onChange={(e) => setForm({ ...form, due: e.target.value })}
-          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
-        />
-        <input
-          required
-          placeholder="필요 태그 (쉼표 구분: SNS,뷰티,숏폼)"
-          value={form.requiredTags}
-          onChange={(e) => setForm({ ...form, requiredTags: e.target.value })}
-          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          className="w-full rounded-full bg-brand-primary py-3 text-sm font-semibold text-white"
-        >
-          공고 등록
-        </button>
-      </form>
-    </div>
+        <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+          <div>
+            <p className="mb-2 text-sm font-semibold">대표 이미지 (선택)</p>
+            {imagePreview ? (
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-brand-border">
+                <img
+                  src={imagePreview}
+                  alt="공고 미리보기"
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl("");
+                    setImagePreview("");
+                  }}
+                  className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white"
+                >
+                  삭제
+                </button>
+              </div>
+            ) : (
+              <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-brand-border bg-brand-primary-light/50 text-sm text-brand-muted hover:bg-brand-primary-light">
+                <span>클릭하여 이미지 업로드</span>
+                <span className="mt-1 text-xs">4:3 비율로 자동 크롭됩니다</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    void processCampaignCoverImage(file)
+                      .then((dataUrl) => {
+                        setImageUrl(dataUrl);
+                        setImagePreview(dataUrl);
+                      })
+                      .catch(() => {
+                        setError("이미지 처리에 실패했습니다.");
+                      });
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          <input
+            required
+            placeholder="카테고리 (예: SNS 광고)"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <input
+            required
+            placeholder="공고 제목"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <input
+            required
+            placeholder="페이 (예: 20만원 ~ 50만원)"
+            value={form.pay}
+            onChange={(e) => setForm({ ...form, pay: e.target.value })}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <input
+            required
+            placeholder="마감 (예: D-7 / 2026-06-10 마감)"
+            value={form.due}
+            onChange={(e) => setForm({ ...form, due: e.target.value })}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="촬영·근무 지역 (선택)"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <div>
+            <p className="mb-2 text-sm font-semibold">필요 태그</p>
+            <TagChipInput value={tags} onChange={setTags} min={1} />
+          </div>
+          <textarea
+            placeholder="공고 소개 (캠페인 배경, 브랜드 설명 등)"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            rows={4}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <textarea
+            placeholder="지원 자격 · 요건"
+            value={form.requirements}
+            onChange={(e) => setForm({ ...form, requirements: e.target.value })}
+            rows={3}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          <textarea
+            placeholder="제출물 · 진행 내용"
+            value={form.deliverables}
+            onChange={(e) => setForm({ ...form, deliverables: e.target.value })}
+            rows={3}
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            className="w-full rounded-full bg-brand-primary py-3 text-sm font-semibold text-white"
+          >
+            공고 등록
+          </button>
+        </form>
+      </div>
+    </AuthGate>
   );
 }

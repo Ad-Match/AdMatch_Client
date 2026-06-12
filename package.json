@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/generate-pwa-icons.mjs && next build",
     "start": "next start",
+    "start:pwa": "next start -H 0.0.0.0",
     "lint": "eslint",
     "capture:plfil": "node scripts/capture-plfil-tabs.mjs",
     "capture:plfil-core": "node scripts/capture-plfil-core-pages.mjs"
@@ -16,14 +17,17 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@serwist/turbopack": "^9.5.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "esbuild": "^0.28.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "puppeteer": "^25.1.0",
+    "serwist": "^9.5.11",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { apiFetch } from "@/lib/api";
+import { CampaignCover } from "@/components/campaign/CampaignCover";
 import type { Campaign, Paginated } from "@/lib/types";
 
 export function AdvertiserBriefMfe() {
@@ -92,20 +93,27 @@ export function AdvertiserBriefMfe() {
               href={`/campaigns/${post.id}`}
               className="overflow-hidden rounded-xl border border-brand-border bg-white transition hover:shadow-md"
             >
-              <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-primary-soft to-white">
-                <span className="absolute bottom-2 left-2 rounded bg-gray-800/80 px-2 py-0.5 text-xs text-white">
-                  {post.category}
-                </span>
-                <span
-                  className={`absolute bottom-2 right-2 rounded px-2 py-0.5 text-xs font-semibold ${
-                    post.status === "진행중"
-                      ? "bg-[#070707] text-white"
-                      : "bg-gray-500 text-white"
-                  }`}
-                >
-                  {post.status}
-                </span>
-              </div>
+              <CampaignCover
+                imageUrl={post.imageUrl}
+                alt={post.title}
+                className="aspect-[4/3]"
+                overlay={
+                  <>
+                    <span className="absolute bottom-2 left-2 rounded bg-gray-800/80 px-2 py-0.5 text-xs text-white">
+                      {post.category}
+                    </span>
+                    <span
+                      className={`absolute bottom-2 right-2 rounded px-2 py-0.5 text-xs font-semibold ${
+                        post.status === "진행중"
+                          ? "bg-[#070707] text-white"
+                          : "bg-gray-500 text-white"
+                      }`}
+                    >
+                      {post.status}
+                    </span>
+                  </>
+                }
+              />
               <div className="p-4">
                 <h2 className="line-clamp-2 text-sm font-bold text-gray-900">
                   {post.title}

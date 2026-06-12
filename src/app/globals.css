@@ -63,10 +63,7 @@ body {
   font-family: var(--font-geist-sans), "Pretendard", sans-serif;
 }
 
-a {
-  color: inherit;
-}
-
+/* class가 있는 Link/Button는 Tailwind text-* 유틸 사용 */
 a:not([class]) {
   color: #070707;
   text-decoration-color: #070707;

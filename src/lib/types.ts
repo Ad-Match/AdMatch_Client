@@ -4,12 +4,26 @@ export type User = {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
+  role: UserRole | null;
+  needsOnboarding?: boolean;
+  provider?: string | null;
 };
 
 export type AuthResponse = {
   accessToken: string;
   user: User;
+};
+
+export type ModelHobby = {
+  name: string;
+  rating: number;
+};
+
+export type ModelCareer = {
+  category: string;
+  year: string;
+  title: string;
+  role?: string;
 };
 
 export type ModelProfile = {
@@ -22,6 +36,14 @@ export type ModelProfile = {
   weight?: string;
   bio?: string;
   profileImageUrl?: string;
+  galleryImageUrls?: string[];
+  videoUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  education?: string;
+  residence?: string;
+  hobbies?: ModelHobby[];
+  careers?: ModelCareer[];
   tags: string[];
   verified: boolean;
   createdAt: string;
@@ -38,6 +60,11 @@ export type Campaign = {
   status: "진행중" | "마감";
   advertiserId: string;
   requiredTags: string[];
+  description?: string;
+  requirements?: string;
+  deliverables?: string;
+  location?: string;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -49,6 +76,7 @@ export type Matching = {
   status: "pending" | "accepted" | "rejected" | "cancelled";
   score: number;
   message?: string;
+  chatRoomId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -69,6 +97,7 @@ export type Paginated<T> = {
 
 export type MatchingWithCampaign = Matching & {
   campaign?: Campaign;
+  modelName?: string;
 };
 
 export type ChatRoom = {

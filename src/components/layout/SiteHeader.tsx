@@ -4,11 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
-import { NavDropdown } from "@/components/layout/NavDropdown";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 import {
-  countUnreadImportant,
-  loadMatchingNotifications,
+  countUnread,
+  loadNotifications,
 } from "@/lib/matching-notifications";
 
 function BellIcon() {
@@ -19,8 +18,6 @@ function BellIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
       className="h-5 w-5"
       aria-hidden
     >
@@ -34,6 +31,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const refreshUnread = useCallback(async () => {
@@ -42,35 +40,29 @@ export function SiteHeader() {
       return;
     }
     try {
-      const data = await loadMatchingNotifications(user);
-      setUnreadCount(countUnreadImportant(data.important));
+      const data = await loadNotifications(user);
+      setUnreadCount(countUnread(data));
     } catch {
       setUnreadCount(0);
     }
   }, [user]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- poll unread badge
     void refreshUnread();
-    const timer = setInterval(() => {
-      void refreshUnread();
-    }, 15000);
+    const timer = setInterval(() => void refreshUnread(), 15000);
     return () => clearInterval(timer);
   }, [refreshUnread]);
 
-  const modelNavItems = [
-    { href: "/models", label: "모델 리스트" },
-    { href: "/models/profile", label: "프로필 관리" },
-  ];
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
-  const campaignNavItems = [
-    { href: "/campaigns", label: "공고 리스트" },
-    {
-      href: "/campaigns/applications",
-      label:
-        user?.role === "advertiser" ? "매칭 제안 내역" : "공고 지원 내역",
-    },
-  ];
+  const showModelsNav = user?.role === "advertiser";
+  const showCampaignsNav = Boolean(user);
+  const showServiceIntro = !user;
+
+  const navLinkClass = (active: boolean) =>
+    `text-sm font-medium ${active ? "text-brand-primary" : "text-gray-700"}`;
 
   return (
     <>
@@ -83,27 +75,35 @@ export function SiteHeader() {
             AdMatch
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">
-            <NavDropdown
-              label="모델 검색"
-              href="/models"
-              items={modelNavItems}
-            />
-            <NavDropdown
-              label="브랜드 공고"
-              href="/campaigns"
-              items={campaignNavItems}
-            />
-            <Link
-              href="/"
-              className={`text-sm font-medium transition ${
-                pathname === "/"
-                  ? "text-brand-primary"
-                  : "text-gray-700 hover:text-brand-primary"
-              }`}
-            >
-              서비스 소개
-            </Link>
+          <nav className="hidden items-center gap-6 md:flex">
+            {showModelsNav && (
+              <Link
+                href="/models"
+                className={navLinkClass(pathname.startsWith("/models"))}
+              >
+                모델 찾기
+              </Link>
+            )}
+            {showCampaignsNav && (
+              <Link
+                href="/campaigns"
+                className={navLinkClass(pathname.startsWith("/campaigns"))}
+              >
+                브랜드 공고
+              </Link>
+            )}
+            {showServiceIntro && (
+              <Link
+                href="/"
+                className={`text-sm font-medium transition ${
+                  pathname === "/"
+                    ? "text-brand-primary"
+                    : "text-gray-700 hover:text-brand-primary"
+                }`}
+              >
+                서비스 소개
+              </Link>
+            )}
             {user && (
               <>
                 <Link
@@ -130,7 +130,7 @@ export function SiteHeader() {
             )}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <>
                 <button
@@ -146,12 +146,12 @@ export function SiteHeader() {
                     </span>
                   )}
                 </button>
-                <span className="hidden text-sm text-brand-muted sm:inline">
+                <span className="hidden text-sm text-brand-muted lg:inline">
                   {user.name} ({user.role === "advertiser" ? "광고주" : "모델"})
                 </span>
                 <button
                   onClick={logout}
-                  className="rounded-full border border-brand-border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-white"
+                  className="hidden rounded-full border border-brand-border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-white sm:inline-flex"
                 >
                   로그아웃
                 </button>
@@ -159,13 +159,65 @@ export function SiteHeader() {
             ) : (
               <Link
                 href="/login"
-                className="rounded-full border border-brand-primary px-5 py-2 text-sm font-semibold text-brand-primary transition hover:bg-brand-primary-light"
+                className="rounded-full border border-brand-primary px-4 py-2 text-sm font-semibold text-brand-primary transition hover:bg-brand-primary-light sm:px-5"
               >
                 로그인
               </Link>
             )}
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-border md:hidden"
+              aria-label="메뉴"
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              ☰
+            </button>
           </div>
         </div>
+
+        {mobileOpen && (
+          <div className="border-t border-brand-border bg-[#FAF6F9] px-4 py-4 md:hidden">
+            <div className="flex flex-col gap-2 text-sm font-medium">
+              {showServiceIntro && (
+                <Link href="/" className="rounded-lg px-3 py-2 hover:bg-white">
+                  서비스 소개
+                </Link>
+              )}
+              {showModelsNav && (
+                <Link href="/models" className="rounded-lg px-3 py-2 hover:bg-white">
+                  모델 찾기
+                </Link>
+              )}
+              {showCampaignsNav && (
+                <Link href="/campaigns" className="rounded-lg px-3 py-2 hover:bg-white">
+                  브랜드 공고
+                </Link>
+              )}
+              {user && (
+                <>
+                  <Link href="/chats" className="rounded-lg px-3 py-2 hover:bg-white">
+                    채팅
+                  </Link>
+                  <Link href="/mypage" className="rounded-lg px-3 py-2 hover:bg-white">
+                    마이페이지
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="rounded-lg px-3 py-2 text-left text-brand-muted hover:bg-white"
+                  >
+                    로그아웃
+                  </button>
+                </>
+              )}
+              {!user && (
+                <Link href="/register" className="rounded-lg px-3 py-2 hover:bg-white">
+                  회원가입
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {user && (

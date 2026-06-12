@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChatAvatar } from "@/components/chat/ChatAvatar";
 import { useAuth } from "@/context/AuthProvider";
+import { useToast } from "@/components/ui/Toast";
 import { apiFetch } from "@/lib/api";
+import { formatMessageTime } from "@/lib/format";
 import type {
   Campaign,
   ChatMessage,
@@ -17,6 +20,7 @@ type Props = { roomId: string };
 export function ChatRoomClient({ roomId }: Props) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { showToast } = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [room, setRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -90,95 +94,145 @@ export function ChatRoomClient({ roomId }: Props) {
       });
       setText("");
       await loadMessages();
+    } catch {
+      showToast("메시지 전송에 실패했습니다.", "error");
     } finally {
       setSending(false);
     }
   }
 
   if (authLoading || loading || !user || !room) {
-    return <p className="px-4 py-16 text-center text-brand-muted">불러오는 중...</p>;
+    return (
+      <p className="px-4 py-16 text-center text-brand-muted">불러오는 중...</p>
+    );
   }
 
-  const headerTitle =
-    user.role === "advertiser"
-      ? model?.name ?? "모델"
-      : campaign?.title ?? "브랜드 공고";
+  const isAdvertiser = user.role === "advertiser";
+  const partnerName = isAdvertiser
+    ? model?.name ?? "모델"
+    : campaign?.title ?? "브랜드 공고";
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col px-4 py-6">
-      <div className="mb-4 flex items-center gap-3 border-b border-brand-border pb-4">
-        <Link href="/chats" className="text-sm text-[#070707] hover:underline">
-          ← 채팅 목록
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-[#070707]">{headerTitle}</h1>
-          <p className="text-xs text-brand-muted">
-            {user.role === "advertiser" ? campaign?.title : model?.name}
-          </p>
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      <Link
+        href="/chats"
+        className="text-sm text-[#070707] hover:underline"
+      >
+        ← 채팅 목록
+      </Link>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <ChatAvatar
+            name={partnerName}
+            imageUrl={isAdvertiser ? model?.profileImageUrl : undefined}
+            size="lg"
+          />
+          <div>
+            <h1 className="text-xl font-bold text-[#070707]">{partnerName}</h1>
+            <p className="text-sm text-brand-muted">
+              {isAdvertiser ? campaign?.title : model?.name}
+            </p>
+          </div>
         </div>
+        {campaign && (
+          <Link
+            href={`/campaigns/${campaign.id}`}
+            className="rounded-full border border-brand-border px-4 py-2 text-sm font-semibold text-[#070707] hover:bg-brand-primary-light"
+          >
+            공고 보기
+          </Link>
+        )}
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-brand-border bg-white p-4">
-        {messages.map((msg) => {
-          const isSystem = msg.senderId === "system";
-          const isMine = msg.senderId === user.id;
+      {campaign && (
+        <div className="mt-4 rounded-xl border border-brand-border bg-white px-4 py-3 text-sm text-brand-muted">
+          <span className="font-semibold text-[#070707]">{campaign.title}</span>
+          {" · "}
+          {campaign.category} · {campaign.pay}
+        </div>
+      )}
 
-          if (isSystem) {
-            return (
-              <p
-                key={msg.id}
-                className="text-center text-xs text-brand-muted"
-              >
-                {msg.content}
-              </p>
-            );
-          }
+      <div className="mt-6 flex min-h-[420px] flex-col rounded-2xl border border-brand-border bg-white shadow-sm">
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          {messages.length === 0 && (
+            <p className="py-8 text-center text-sm text-brand-muted">
+              매칭이 완료되었습니다. 첫 메시지를 보내보세요.
+            </p>
+          )}
 
-          return (
-            <div
-              key={msg.id}
-              className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm ${
-                  isMine
-                    ? "bg-[#070707] text-white"
-                    : "bg-brand-primary-light text-[#070707]"
-                }`}
-              >
-                <p>{msg.content}</p>
+          {messages.map((msg, index) => {
+            const isSystem = msg.senderId === "system";
+            const isMine = msg.senderId === user.id;
+            const prev = messages[index - 1];
+            const showDate =
+              !prev ||
+              new Date(prev.createdAt).toDateString() !==
+                new Date(msg.createdAt).toDateString();
+
+            if (isSystem) {
+              return (
                 <p
-                  className={`mt-1 text-[10px] ${
-                    isMine ? "text-neutral-400" : "text-brand-muted"
-                  }`}
+                  key={msg.id}
+                  className="text-center text-xs text-brand-muted"
                 >
-                  {new Date(msg.createdAt).toLocaleTimeString("ko-KR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {msg.content}
                 </p>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
+              );
+            }
 
-      <form onSubmit={onSubmit} className="mt-4 flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="메시지를 입력하세요"
-          className="flex-1 rounded-full border border-brand-border px-4 py-3 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={sending || !text.trim()}
-          className="rounded-full bg-[#070707] px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            return (
+              <div key={msg.id}>
+                {showDate && (
+                  <p className="mb-4 text-center text-xs text-brand-muted">
+                    {new Date(msg.createdAt).toLocaleDateString("ko-KR", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                )}
+                <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[75%] ${isMine ? "text-right" : ""}`}>
+                    <div
+                      className={`inline-block rounded-2xl px-4 py-2.5 text-sm ${
+                        isMine
+                          ? "bg-[#070707] text-white"
+                          : "bg-brand-primary-light text-[#070707]"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    </div>
+                    <p className="mt-1 text-[10px] text-brand-muted">
+                      {formatMessageTime(msg.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+
+        <form
+          onSubmit={onSubmit}
+          className="flex gap-2 border-t border-brand-border p-4"
         >
-          전송
-        </button>
-      </form>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="메시지를 입력하세요"
+            className="flex-1 rounded-full border border-brand-border px-4 py-2.5 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={sending || !text.trim()}
+            className="rounded-full bg-[#070707] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            전송
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
