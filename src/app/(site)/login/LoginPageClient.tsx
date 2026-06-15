@@ -13,8 +13,8 @@ export default function LoginPageClient() {
   const searchParams = useSearchParams();
   const { login, oauthLogin, redirectAfterAuth } = useAuth();
   const { showToast } = useToast();
-  const [email, setEmail] = useState("advertiser@admatch.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -64,9 +64,6 @@ export default function LoginPageClient() {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-4 py-16">
       <h1 className="text-2xl font-bold text-gray-900">로그인</h1>
-      <p className="mt-2 text-sm text-brand-muted">
-        광고주: advertiser@admatch.com · 모델: model@admatch.com · 비밀번호 demo1234
-      </p>
 
       <div className="mt-6 space-y-4 rounded-2xl bg-white p-6 shadow-sm">
         <SocialLoginButtons

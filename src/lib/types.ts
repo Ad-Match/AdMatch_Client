@@ -73,12 +73,33 @@ export type Matching = {
   id: string;
   campaignId: string;
   modelId: string;
-  status: "pending" | "accepted" | "rejected" | "cancelled";
+  status: "proposing" | "negotiating" | "completed" | "rejected";
   score: number;
   message?: string;
   chatRoomId?: string;
+  advertiserCompleted: boolean;
+  modelCompleted: boolean;
+  depositPaidAt?: string;
+  depositAmount?: number;
+  depositPaidByUserId?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type MatchingReview = {
+  id: string;
+  matchingId: string;
+  reviewerUserId: string;
+  revieweeUserId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+};
+
+export type UserRatingSummary = {
+  userId: string;
+  averageRating: number;
+  reviewCount: number;
 };
 
 export type ModelRecommendation = {

@@ -12,13 +12,10 @@ import {
   type AppNotification,
 } from "@/lib/matching-notifications";
 import type { User } from "@/lib/types";
-
-const statusLabel: Record<string, string> = {
-  pending: "검토 중",
-  accepted: "수락됨",
-  rejected: "거절됨",
-  cancelled: "취소됨",
-};
+import {
+  getMatchingStatusLabel,
+  isMatchingChatOpen,
+} from "@/lib/matching-status";
 
 type Props = {
   user: User;
@@ -81,7 +78,7 @@ export function NotificationPanel({
   async function handleAction(
     matchingId: string,
     notificationId: string,
-    status: "accepted" | "rejected",
+    status: "negotiating" | "rejected",
   ) {
     setActingId(matchingId);
     try {
@@ -204,7 +201,7 @@ export function NotificationPanel({
                     <p className="mt-1 text-xs text-brand-muted">
                       {user.role === "advertiser"
                         ? item.campaignTitle
-                        : `적합도 ${item.score}점 · ${statusLabel[item.status ?? ""] ?? item.status}`}
+                        : `적합도 ${item.score}점 · ${getMatchingStatusLabel(item.status ?? "")}`}
                     </p>
                     {item.message && (
                       <p className="mt-2 text-sm text-gray-600">{item.message}</p>
@@ -223,7 +220,7 @@ export function NotificationPanel({
                             void handleAction(
                               item.matchingId!,
                               item.id,
-                              "accepted",
+                              "negotiating",
                             );
                           }}
                           className="flex-1 rounded-full bg-[#070707] py-2 text-xs font-semibold text-white disabled:opacity-50"
@@ -248,7 +245,7 @@ export function NotificationPanel({
                       </div>
                     )}
 
-                    {item.status === "accepted" && (
+                    {isMatchingChatOpen(item.status ?? "") && (
                       <Link
                         href="/chats"
                         onClick={onClose}

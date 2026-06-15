@@ -67,15 +67,15 @@ export function SiteHeader() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-brand-border bg-[#FAF6F9]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <div className="relative mx-auto flex h-16 max-w-6xl items-center px-4">
           <Link
             href="/"
-            className="text-xl font-bold tracking-tight text-brand-primary"
+            className="z-10 shrink-0 text-xl font-bold tracking-tight text-brand-primary"
           >
             AdMatch
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 whitespace-nowrap md:flex">
             {showModelsNav && (
               <Link
                 href="/models"
@@ -130,7 +130,7 @@ export function SiteHeader() {
             )}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="z-10 ml-auto flex shrink-0 items-center justify-end gap-2 sm:gap-3">
             {user ? (
               <>
                 <button
@@ -146,7 +146,10 @@ export function SiteHeader() {
                     </span>
                   )}
                 </button>
-                <span className="hidden text-sm text-brand-muted lg:inline">
+                <span
+                  className="hidden max-w-[140px] truncate text-sm text-brand-muted lg:inline"
+                  title={`${user.name} (${user.role === "advertiser" ? "광고주" : "모델"})`}
+                >
                   {user.name} ({user.role === "advertiser" ? "광고주" : "모델"})
                 </span>
                 <button

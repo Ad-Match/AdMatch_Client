@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { apiFetch } from "@/lib/api";
 import { CampaignCover } from "@/components/campaign/CampaignCover";
+import { formatCampaignShootSchedule } from "@/lib/campaign-due";
 import type { Campaign, Paginated } from "@/lib/types";
 
 export function AdvertiserBriefMfe() {
@@ -119,7 +120,9 @@ export function AdvertiserBriefMfe() {
                   {post.title}
                 </h2>
                 <p className="mt-2 text-xs text-brand-muted">페이 : {post.pay}</p>
-                <p className="mt-1 text-xs text-brand-muted">{post.due}</p>
+                <p className="mt-1 text-xs text-brand-muted">
+                  {formatCampaignShootSchedule(post.due)}
+                </p>
               </div>
             </Link>
           ))}

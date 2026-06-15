@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { ShootDateField } from "@/components/campaign/ShootDateField";
 import { TagChipInput } from "@/components/ui/TagChipInput";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthProvider";
@@ -136,12 +137,10 @@ export default function CampaignCreatePage() {
             onChange={(e) => setForm({ ...form, pay: e.target.value })}
             className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
           />
-          <input
+          <ShootDateField
             required
-            placeholder="마감 (예: D-7 / 2026-06-10 마감)"
             value={form.due}
-            onChange={(e) => setForm({ ...form, due: e.target.value })}
-            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+            onChange={(due) => setForm({ ...form, due })}
           />
           <input
             placeholder="촬영·근무 지역 (선택)"

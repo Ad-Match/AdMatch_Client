@@ -9,19 +9,11 @@ import { loadMatchingHistory } from "@/lib/matching-notifications";
 import { initialsFromName } from "@/lib/format";
 import type { MatchingWithCampaign, ModelProfile } from "@/lib/types";
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "검토 중",
-  accepted: "매칭 완료",
-  rejected: "거절됨",
-  cancelled: "취소됨",
-};
-
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-[#FFF8E6] text-[#B8860B]",
-  accepted: "bg-[#E8F9E8] text-[#2E7D32]",
-  rejected: "bg-brand-primary-light text-brand-muted",
-  cancelled: "bg-brand-primary-light text-brand-muted",
-};
+import {
+  getMatchingStatusLabel,
+  getMatchingStatusStyle,
+  isMatchingChatOpen,
+} from "@/lib/matching-status";
 
 function ChevronRight() {
   return (
@@ -121,11 +113,9 @@ function MatchingHistorySection() {
         <div key={m.id} className="px-5 py-4">
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                STATUS_STYLE[m.status] ?? STATUS_STYLE.pending
-              }`}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getMatchingStatusStyle(m.status)}`}
             >
-              {STATUS_LABEL[m.status] ?? m.status}
+              {getMatchingStatusLabel(m.status)}
             </span>
             <span className="text-[11px] text-brand-muted">
               {new Date(m.createdAt).toLocaleDateString("ko-KR")}
@@ -146,9 +136,9 @@ function MatchingHistorySection() {
             >
               공고 보기
             </Link>
-            {m.status === "accepted" && m.chatRoomId && (
+            {isMatchingChatOpen(m.status) && (
               <Link
-                href={`/chats/${m.chatRoomId}`}
+                href="/chats"
                 className="rounded-full bg-[#070707] px-3 py-1.5 text-xs font-semibold text-white"
               >
                 채팅하기
@@ -164,7 +154,7 @@ function MatchingHistorySection() {
 function MyPageContent() {
   const { user, logout } = useAuth();
   const [modelProfile, setModelProfile] = useState<ModelProfile | null>(null);
-  const [stats, setStats] = useState({ total: 0, pending: 0, accepted: 0 });
+  const [stats, setStats] = useState({ total: 0, proposing: 0, negotiating: 0, completed: 0 });
 
   const loadProfile = useCallback(async () => {
     if (!user || user.role !== "model") return;
@@ -182,11 +172,12 @@ function MyPageContent() {
       const data = await loadMatchingHistory(user);
       setStats({
         total: data.length,
-        pending: data.filter((m) => m.status === "pending").length,
-        accepted: data.filter((m) => m.status === "accepted").length,
+        proposing: data.filter((m) => m.status === "proposing").length,
+        negotiating: data.filter((m) => m.status === "negotiating").length,
+        completed: data.filter((m) => m.status === "completed").length,
       });
     } catch {
-      setStats({ total: 0, pending: 0, accepted: 0 });
+      setStats({ total: 0, proposing: 0, negotiating: 0, completed: 0 });
     }
   }, [user]);
 
@@ -257,11 +248,12 @@ function MyPageContent() {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-md">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:max-w-lg">
             {[
               { label: "전체", value: stats.total },
-              { label: "진행 중", value: stats.pending },
-              { label: "매칭 완료", value: stats.accepted },
+              { label: "제안 중", value: stats.proposing },
+              { label: "협상 중", value: stats.negotiating },
+              { label: "완료", value: stats.completed },
             ].map((item) => (
               <div
                 key={item.label}

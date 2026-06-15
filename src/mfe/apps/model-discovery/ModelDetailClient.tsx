@@ -15,7 +15,7 @@ import {
   formatUpdatedAt,
   groupCareersByCategory,
 } from "@/lib/model-profile";
-import type { Campaign, Matching, ModelProfile } from "@/lib/types";
+import type { Campaign, Matching, ModelProfile, UserRatingSummary } from "@/lib/types";
 
 type Props = { modelId: string };
 
@@ -72,6 +72,9 @@ export function ModelDetailClient({ modelId }: Props) {
   const [careerFilter, setCareerFilter] = useState("전체");
   const [showAllHobbies, setShowAllHobbies] = useState(false);
   const [showAllCareers, setShowAllCareers] = useState(false);
+  const [ratingSummary, setRatingSummary] = useState<UserRatingSummary | null>(
+    null,
+  );
 
   useEffect(() => {
     async function load() {
@@ -81,6 +84,16 @@ export function ModelDetailClient({ modelId }: Props) {
           apiFetch<{ items: Campaign[] }>("/campaigns?status=진행중&limit=50"),
         ]);
         setModel(modelData);
+        if (modelData.userId) {
+          try {
+            const summary = await apiFetch<UserRatingSummary>(
+              `/matchings/ratings/users/${modelData.userId}/summary`,
+            );
+            setRatingSummary(summary);
+          } catch {
+            setRatingSummary(null);
+          }
+        }
         const mine = user
           ? campaignData.items.filter((c) => c.advertiserId === user.id)
           : [];
@@ -174,6 +187,17 @@ export function ModelDetailClient({ modelId }: Props) {
                 <p className="mt-1 text-xs text-brand-muted">
                   최근 업데이트 {formatUpdatedAt(model.updatedAt)}
                 </p>
+                {ratingSummary && ratingSummary.reviewCount > 0 && (
+                  <p className="mt-2 flex items-center gap-1.5 text-sm text-[#070707]">
+                    <span className="text-amber-400">★</span>
+                    <span className="font-semibold">
+                      {ratingSummary.averageRating.toFixed(1)}
+                    </span>
+                    <span className="text-brand-muted">
+                      ({ratingSummary.reviewCount}개 평가)
+                    </span>
+                  </p>
+                )}
               </div>
               {model.verified && (
                 <span className="shrink-0 rounded bg-[#070707] px-2 py-1 text-xs font-semibold text-white">

@@ -8,6 +8,11 @@ import { useToast } from "@/components/ui/Toast";
 import { ApiError, apiFetch } from "@/lib/api";
 import { parseApiErrorMessage } from "@/lib/api-errors";
 import { CampaignCover } from "@/components/campaign/CampaignCover";
+import {
+  formatCampaignShootSchedule,
+  getCampaignDday,
+} from "@/lib/campaign-due";
+import { getMatchingStatusLabel, isMatchingChatOpen } from "@/lib/matching-status";
 import type {
   Campaign,
   Matching,
@@ -134,13 +139,13 @@ export function CampaignDetailClient({ campaignId }: Props) {
     }
   }
 
-  async function updateMatching(id: string, next: "accepted" | "rejected") {
+  async function updateMatching(id: string, next: "negotiating" | "rejected") {
     try {
       const result = await apiFetch<Matching>(`/matchings/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status: next }),
       });
-      if (next === "accepted") {
+      if (next === "negotiating") {
         showToast("매칭을 수락했습니다. 채팅으로 이동합니다.", "success");
         if (result.chatRoomId) {
           router.push(`/chats/${result.chatRoomId}`);
@@ -200,7 +205,11 @@ export function CampaignDetailClient({ campaignId }: Props) {
             </div>
             <h1 className="text-xl font-bold sm:text-2xl">{campaign.title}</h1>
             <p className="mt-2 text-sm text-neutral-200">
-              {campaign.pay} · {campaign.due}
+              {campaign.pay}
+              {" · "}
+              <span className="font-semibold">{getCampaignDday(campaign.due)}</span>
+              {" · "}
+              {formatCampaignShootSchedule(campaign.due)}
               {campaign.location ? ` · ${campaign.location}` : ""}
             </p>
           </div>
@@ -305,14 +314,14 @@ export function CampaignDetailClient({ campaignId }: Props) {
                   <div>
                     <p className="text-sm font-semibold">모델 ID: {m.modelId}</p>
                     <p className="text-xs text-brand-muted">
-                      적합도 {m.score} · {m.status}
+                      적합도 {m.score} · {getMatchingStatusLabel(m.status)}
                     </p>
                   </div>
-                  {m.status === "pending" && (
+                  {m.status === "proposing" && (
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => void updateMatching(m.id, "accepted")}
+                        onClick={() => void updateMatching(m.id, "negotiating")}
                         className="rounded-lg bg-[#070707] px-3 py-2 text-xs font-semibold text-white"
                       >
                         수락 · 채팅
@@ -326,7 +335,7 @@ export function CampaignDetailClient({ campaignId }: Props) {
                       </button>
                     </div>
                   )}
-                  {m.status === "accepted" && (
+                  {isMatchingChatOpen(m.status) && (
                     <Link
                       href="/chats"
                       className="text-xs font-semibold text-[#070707] underline"

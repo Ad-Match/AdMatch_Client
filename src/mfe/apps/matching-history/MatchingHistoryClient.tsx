@@ -8,12 +8,11 @@ import { ApiError, apiFetch } from "@/lib/api";
 import { loadMatchingHistory } from "@/lib/matching-notifications";
 import type { Campaign, Matching } from "@/lib/types";
 
-const statusLabel: Record<string, string> = {
-  pending: "검토 중",
-  accepted: "수락됨",
-  rejected: "거절됨",
-  cancelled: "취소됨",
-};
+import {
+  getMatchingStatusLabel,
+  isMatchingActionable,
+  isMatchingChatOpen,
+} from "@/lib/matching-status";
 
 type EnrichedMatching = Matching & {
   campaign?: Campaign;
@@ -62,7 +61,7 @@ export function MatchingHistoryClient() {
     }
   }, [user, authLoading, router, load]);
 
-  async function updateStatus(id: string, status: "accepted" | "rejected") {
+  async function updateStatus(id: string, status: "negotiating" | "rejected") {
     setActingId(id);
     try {
       await apiFetch(`/matchings/${id}/status`, {
@@ -121,7 +120,7 @@ export function MatchingHistoryClient() {
                     : item.campaign?.title ?? `공고 #${item.campaignId}`}
                 </h2>
                 <p className="mt-1 text-xs text-brand-muted">
-                  적합도 {item.score}점 · {statusLabel[item.status] ?? item.status}
+                  적합도 {item.score}점 · {getMatchingStatusLabel(item.status)}
                 </p>
                 {item.message && (
                   <p className="mt-2 text-sm text-gray-600">{item.message}</p>
@@ -139,12 +138,12 @@ export function MatchingHistoryClient() {
                     공고 보기
                   </Link>
                 )}
-                {isAdvertiser && item.status === "pending" && (
+                {isMatchingActionable(item.status, user?.role) && (
                   <div className="flex gap-2">
                     <button
                       type="button"
                       disabled={actingId === item.id}
-                      onClick={() => void updateStatus(item.id, "accepted")}
+                      onClick={() => void updateStatus(item.id, "negotiating")}
                       className="rounded-lg bg-[#070707] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
                     >
                       수락
@@ -159,7 +158,7 @@ export function MatchingHistoryClient() {
                     </button>
                   </div>
                 )}
-                {item.status === "accepted" && (
+                {isMatchingChatOpen(item.status) && (
                   <Link
                     href="/chats"
                     className="rounded-lg bg-brand-primary-light px-3 py-2 text-center text-xs font-semibold text-[#070707]"

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { ShootDateField } from "@/components/campaign/ShootDateField";
 import { TagChipInput } from "@/components/ui/TagChipInput";
+import { toCampaignDueInputValue } from "@/lib/campaign-due";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthProvider";
 import { ApiError, apiFetch } from "@/lib/api";
@@ -47,7 +49,7 @@ export default function CampaignEditClient({ campaignId }: Props) {
         category: campaign.category,
         title: campaign.title,
         pay: campaign.pay,
-        due: campaign.due,
+        due: toCampaignDueInputValue(campaign.due),
         location: campaign.location ?? "",
         description: campaign.description ?? "",
         requirements: campaign.requirements ?? "",
@@ -187,12 +189,10 @@ export default function CampaignEditClient({ campaignId }: Props) {
             onChange={(e) => setForm({ ...form, pay: e.target.value })}
             className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
           />
-          <input
+          <ShootDateField
             required
-            placeholder="마감"
             value={form.due}
-            onChange={(e) => setForm({ ...form, due: e.target.value })}
-            className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm"
+            onChange={(due) => setForm({ ...form, due })}
           />
           <input
             placeholder="촬영·근무 지역"

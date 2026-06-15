@@ -1,4 +1,5 @@
 import { ApiError, apiFetch } from "@/lib/api";
+import { isMatchingActionable } from "@/lib/matching-status";
 import type { Campaign, Matching, ModelProfile, Paginated, User } from "@/lib/types";
 
 export type AppNotification = {
@@ -127,7 +128,7 @@ async function loadMatchingNotificationsForUser(
     createdAt: m.createdAt,
     campaignTitle: m.campaign?.title,
     modelName: m.modelName,
-    actionable: user.role === "advertiser" && m.status === "pending",
+    actionable: isMatchingActionable(m.status, user.role),
   }));
 }
 

@@ -34,6 +34,26 @@ declare global {
   }
 }
 
+function KakaoIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9 1.5C4.86 1.5 1.5 4.29 1.5 7.75c0 2.07 1.28 3.9 3.24 5.03-.14.51-.62 2.32-.63 2.44 0 .16.08.31.21.39.13.08.29.08.42 0 .12-.07 1.95-1.28 2.27-1.5.53.08 1.07.12 1.63.12 4.14 0 7.5-2.79 7.5-6.25S13.14 1.5 9 1.5z"
+        fill="#191919"
+      />
+    </svg>
+  );
+}
+
 type Props = {
   onGoogleToken: (token: string) => void;
   disabled?: boolean;
@@ -171,9 +191,10 @@ export function SocialLoginButtons({
             type="button"
             disabled={disabled || !kakaoReady}
             onClick={handleKakaoLogin}
-            className="relative z-10 flex h-10 w-full cursor-pointer touch-manipulation items-center justify-center gap-2 rounded-full bg-[#FEE500] text-sm font-semibold text-[#191919] shadow-sm ring-1 ring-[#191919]/10 transition hover:bg-[#FADA0A] hover:shadow-md hover:ring-[#191919]/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#FEE500] disabled:hover:shadow-sm disabled:active:scale-100"
+            className="relative z-10 flex h-10 w-full cursor-pointer touch-manipulation items-center justify-center gap-2.5 rounded-full bg-[#FEE500] px-4 text-sm font-semibold text-[#191919] shadow-sm ring-1 ring-[#191919]/10 transition hover:bg-[#FADA0A] hover:shadow-md hover:ring-[#191919]/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#FEE500] disabled:hover:shadow-sm disabled:active:scale-100"
           >
-            {kakaoReady ? "카카오로 계속하기" : "카카오 로딩 중..."}
+            <KakaoIcon />
+            <span>{kakaoReady ? "카카오로 계속하기" : "카카오 로딩 중..."}</span>
           </button>
         </>
       )}

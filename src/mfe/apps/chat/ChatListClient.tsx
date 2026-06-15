@@ -22,7 +22,7 @@ export function ChatListClient() {
     setLoading(true);
     setError("");
     try {
-      const list = await apiFetch<ChatRoom[]>(`/chats?userId=${user.id}`);
+      const list = await apiFetch<ChatRoom[]>(`/chats`);
       const enriched = await Promise.all(
         list.map(async (room): Promise<ChatRoomSummary & { modelImageUrl?: string }> => {
           try {
@@ -30,7 +30,7 @@ export function ChatListClient() {
               apiFetch<Campaign>(`/campaigns/${room.campaignId}`),
               apiFetch<ModelProfile>(`/models/${room.modelId}`),
               apiFetch<Array<{ content: string }>>(
-                `/chats/${room.id}/messages?userId=${user.id}`,
+                `/chats/${room.id}/messages`,
               ),
             ]);
             const last = messages[messages.length - 1];
